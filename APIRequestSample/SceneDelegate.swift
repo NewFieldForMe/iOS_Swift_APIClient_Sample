@@ -20,7 +20,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
 
         // Create the SwiftUI view that provides the window contents.
-        APIClient().request()
+
+        let request = GitHubAccountAPIRequest()
+        APIClient().request(request, decode: request.decode, completion: { (model: GitHubAccount) in
+            dump(model)
+        })
+
+        let request2 = GitHubSearchRepositoriesAPIRequest()
+        APIClient().request(request2, decode: request2.decode, completion: { (model: GitHubRepositories) in
+            dump(model)
+        })
+
         let contentView = ContentView()
 
         // Use a UIHostingController as window root view controller.
