@@ -9,10 +9,14 @@
 import Foundation
 
 class APIClient {
-    func request<T: Codable>(_ requestable: Requestable, decode: @escaping((Data) throws -> T), completion: @escaping(T) -> Void) {
+    func request<T: Codable>(_ requestable: Requestable, decode: ((Data) throws -> T)?, completion: @escaping(T?) -> Void) {
         guard let request = requestable.urlRequest else { return }
         let task = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) in
             if let data = data {
+                guard let decode = decode else {
+                    completion(nil)
+                    return
+                }
                 let model = try! decode(data)
                 completion(model)
             }

@@ -22,12 +22,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Create the SwiftUI view that provides the window contents.
 
         let request = GitHubAccountAPIRequest()
-        APIClient().request(request, decode: request.decode, completion: { (model: GitHubAccount) in
+        APIClient().request(request, decode: request.decode, completion: { model in
             dump(model)
         })
 
         let request2 = GitHubSearchRepositoriesAPIRequest()
-        APIClient().request(request2, decode: request2.decode, completion: { (model: GitHubRepositories) in
+        APIClient().request(request2, decode: request2.decode, completion: { model in
             dump(model)
         })
 
