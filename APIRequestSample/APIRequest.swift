@@ -8,6 +8,17 @@
 
 import Foundation
 
-class APIRequest {
-    
+struct APIRequest {
+    let url: String
+    let HTTPHeader: [String: String]
+    let body: Data?
+    let method: HTTPMethod
+}
+
+enum HTTPMethod: String {
+    case get = "GET"
+    case post = "POST"
+    case put = "PUT"
+    case patch = "PATCH"
+    case delete = "DELETE"
 }

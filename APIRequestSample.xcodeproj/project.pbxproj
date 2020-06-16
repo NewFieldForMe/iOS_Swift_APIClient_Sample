@@ -92,9 +92,9 @@
 				8E9E6CF224975BF200BE0BFF /* LaunchScreen.storyboard */,
 				8E9E6CF524975BF200BE0BFF /* Info.plist */,
 				8E9E6CEF24975BF200BE0BFF /* Preview Content */,
+				8E9E6D0D2497682000BE0BFF /* APIRequest.swift */,
 				8E9E6D09249761E700BE0BFF /* APIClient.swift */,
 				8E9E6D0B2497681600BE0BFF /* APIResponse.swift */,
-				8E9E6D0D2497682000BE0BFF /* APIRequest.swift */,
 			);
 			path = APIRequestSample;
 			sourceTree = "<group>";
