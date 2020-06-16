@@ -9,15 +9,11 @@
 import Foundation
 
 class APIClient {
-    func request<T: Codable>(_ requestable: Requestable, decode: ((Data) throws -> T)?, completion: @escaping(T?) -> Void) {
+    func request<T: Requestable>(_ requestable: T, completion: @escaping(T.Model?) -> Void) {
         guard let request = requestable.urlRequest else { return }
         let task = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) in
             if let data = data {
-                guard let decode = decode else {
-                    completion(nil)
-                    return
-                }
-                let model = try! decode(data)
+                let model = try? requestable.decode(from: data)
                 completion(model)
             }
         })
@@ -26,9 +22,12 @@ class APIClient {
 }
 
 protocol Requestable {
+    associatedtype Model: Codable
+
     var url: String { get }
     var httpMethod: String { get }
     var headers: [String: String] { get }
+    func decode(from data: Data) throws -> Model
 }
 
 extension Requestable {
@@ -43,15 +42,9 @@ extension Requestable {
     }
 }
 
-struct GitHubAccountAPIRequest {
-    func decode(from data: Data) throws -> GitHubAccount {
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(GitHubAccount.self, from: data)
-    }
-}
+struct GitHubAccountAPIRequest: Requestable {
+    typealias Model = GitHubAccount
 
-extension GitHubAccountAPIRequest: Requestable {
     var url: String {
         return "https://api.github.com/users/NewFieldForMe"
     }
@@ -63,6 +56,12 @@ extension GitHubAccountAPIRequest: Requestable {
     var headers: [String : String] {
         return [:]
     }
+
+    func decode(from data: Data) throws -> GitHubAccount {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(GitHubAccount.self, from: data)
+    }
 }
 
 struct GitHubAccount: Codable {
@@ -70,15 +69,9 @@ struct GitHubAccount: Codable {
     let bio: String
 }
 
-struct GitHubSearchRepositoriesAPIRequest {
-    func decode(from data: Data) throws -> GitHubRepositories {
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(GitHubRepositories.self, from: data)
-    }
-}
+struct GitHubSearchRepositoriesAPIRequest: Requestable {
+    typealias Model = GitHubRepositories
 
-extension GitHubSearchRepositoriesAPIRequest: Requestable {
     var url: String {
         return "https://api.github.com/search/repositories?q=swift+api"
     }
@@ -89,6 +82,12 @@ extension GitHubSearchRepositoriesAPIRequest: Requestable {
 
     var headers: [String : String] {
         return [:]
+    }
+
+    func decode(from data: Data) throws -> GitHubRepositories {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(GitHubRepositories.self, from: data)
     }
 }
 
