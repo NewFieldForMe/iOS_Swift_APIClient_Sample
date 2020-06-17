@@ -22,7 +22,7 @@ class APIClient {
 }
 
 protocol Requestable {
-    associatedtype Model: Codable
+    associatedtype Model
 
     var url: String { get }
     var httpMethod: String { get }
