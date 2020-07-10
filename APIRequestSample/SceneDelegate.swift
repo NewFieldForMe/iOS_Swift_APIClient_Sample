@@ -22,13 +22,41 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Create the SwiftUI view that provides the window contents.
 
         let request = GitHubAccountAPIRequest()
-        APIClient().request(request, completion: { model in
-            dump(model)
+        APIClient().request(request, completion: { result in
+            switch(result) {
+            case let .success(model):
+                dump(model)
+            case let .failure(error):
+                switch error {
+                case let .server(status):
+                    print("Error!! StatusCode: \(status)")
+                case .noResponse:
+                    print("Error!! No Response")
+                case let .unknown(e):
+                    print("Error!! Unknown: \(e)")
+                default:
+                    print("Error!! \(error)")
+                }
+            }
         })
 
         let request2 = GitHubSearchRepositoriesAPIRequest()
-        APIClient().request(request2, completion: { model in
-            dump(model)
+        APIClient().request(request2, completion: { result in
+            switch(result) {
+            case let .success(model):
+                dump(model)
+            case let .failure(error):
+                switch error {
+                case let .server(status):
+                    print("Error!! StatusCode: \(status)")
+                case .noResponse:
+                    print("Error!! No Response")
+                case let .unknown(e):
+                    print("Error!! Unknown: \(e)")
+                default:
+                    print("Error!! \(error)")
+                }
+            }
         })
 
         let contentView = ContentView()

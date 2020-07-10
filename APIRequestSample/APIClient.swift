@@ -9,16 +9,38 @@
 import Foundation
 
 class APIClient {
-    func request<T: Requestable>(_ requestable: T, completion: @escaping(T.Model?) -> Void) {
+    func request<T: Requestable>(_ requestable: T, completion: @escaping(Result<T.Model?, APIError>) -> Void) {
         guard let request = requestable.urlRequest else { return }
         let task = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) in
-            if let data = data {
-                let model = try? requestable.decode(from: data)
-                completion(model)
+            if let error = error {
+                completion(.failure(APIError.unknown(error)))
+                return
+            }
+            guard let data = data, let response = response as? HTTPURLResponse else {
+                completion(.failure(APIError.noResponse))
+                return
+            }
+
+            if case 200..<300 = response.statusCode {
+                do {
+                    let model = try requestable.decode(from: data)
+                    completion(.success(model))
+                } catch let decodeError {
+                    completion(.failure(APIError.decode(decodeError)))
+                }
+            } else {
+                completion(.failure(APIError.server(response.statusCode)))
             }
         })
         task.resume()
     }
+}
+
+enum APIError: Error {
+    case server(Int)
+    case decode(Error)
+    case noResponse
+    case unknown(Error)
 }
 
 protocol Requestable {
