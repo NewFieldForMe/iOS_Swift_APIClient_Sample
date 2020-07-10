@@ -10,7 +10,9 @@ import Foundation
 
 class APIClient {
     func request<T: Requestable>(_ requestable: T, completion: @escaping(Result<T.Model?, APIError>) -> Void) {
-        guard let request = requestable.urlRequest else { return }
+        guard var request = requestable.urlRequest() else { return }
+        let gist = PostGist(public: false, filename: "test", content: "yattane.")
+        request.httpBody = try! JSONEncoder().encode(gist)
         let task = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) in
             if let error = error {
                 completion(.failure(APIError.unknown(error)))
@@ -50,10 +52,32 @@ protocol Requestable {
     var httpMethod: String { get }
     var headers: [String: String] { get }
     func decode(from data: Data) throws -> Model
+    func urlRequest() -> URLRequest?
 }
 
-extension Requestable {
-    var urlRequest: URLRequest? {
+class Request: Requestable {
+    typealias Model = Void
+    var url: String {
+        return ""
+    }
+
+    var httpMethod: String {
+        return "GET"
+    }
+
+    var headers: [String : String] {
+        return [:]
+    }
+
+    func encode<T: Encodable>(from model: T) -> Data? {
+        return try! JSONEncoder().encode(model)
+    }
+
+    func decode(from data: Data) throws -> Void {
+        return
+    }
+
+    func urlRequest() -> URLRequest? {
         guard let url = URL(string: url) else { return nil }
         var request = URLRequest(url: url)
         request.httpMethod = httpMethod
@@ -64,18 +88,18 @@ extension Requestable {
     }
 }
 
-struct GitHubAccountAPIRequest: Requestable {
+class GitHubAccountAPIRequest: Request {
     typealias Model = GitHubAccount
 
-    var url: String {
+    override var url: String {
         return "https://api.github.com/users/NewFieldForMe"
     }
 
-    var httpMethod: String {
+    override var httpMethod: String {
         return "GET"
     }
 
-    var headers: [String : String] {
+    override var headers: [String : String] {
         return [:]
     }
 
@@ -91,18 +115,76 @@ struct GitHubAccount: Codable {
     let bio: String
 }
 
-struct GitHubSearchRepositoriesAPIRequest: Requestable {
+class CreateGistAPIRequest: Request {
+    typealias Model = Void
+
+    var gist: PostGist?
+
+    var body: Encodable? {
+        return gist
+    }
+
+    var token = "7b4f7f5b4505b5da9866f39b7464cd6c73acd265"
+
+    override var url: String {
+        return "https://api.github.com/gists"
+    }
+
+    override var httpMethod: String {
+        return "POST"
+    }
+
+    override var headers: [String: String] {
+        return [
+            "Content-type": "application/json; charset=utf-8",
+            "Authorization": "token \(token)"
+        ]
+    }
+}
+
+struct PostGist {
+    let `public`: Bool
+    let filename: String
+    let content: String
+
+    struct CustomCodingKey: CodingKey {
+        var stringValue: String
+        init?(stringValue: String) {
+            self.stringValue = stringValue
+        }
+
+        var intValue: Int?
+        init?(intValue: Int) { return nil }
+
+        static let `public` = CustomCodingKey(stringValue: "public")!
+        static let files = CustomCodingKey(stringValue: "files")!
+        static let content = CustomCodingKey(stringValue: "content")!
+    }
+}
+
+extension PostGist: Encodable {
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CustomCodingKey.self)
+        try container.encode(`public`, forKey: .public)
+        var filesContainer = container.nestedContainer(keyedBy: CustomCodingKey.self, forKey: .files)
+        let fileNameKey = CustomCodingKey(stringValue: filename)!
+        var fileContainer = filesContainer.nestedContainer(keyedBy: CustomCodingKey.self, forKey: fileNameKey)
+        try fileContainer.encode(content, forKey: .content)
+    }
+}
+
+class GitHubSearchRepositoriesAPIRequest: Request {
     typealias Model = GitHubRepositories
 
-    var url: String {
+    override var url: String {
         return "https://api.github.com/search/repositories?q=swift+api"
     }
 
-    var httpMethod: String {
+    override var httpMethod: String {
         return "GET"
     }
 
-    var headers: [String : String] {
+    override var headers: [String : String] {
         return [:]
     }
 
