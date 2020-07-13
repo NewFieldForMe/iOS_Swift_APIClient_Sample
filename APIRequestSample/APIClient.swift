@@ -49,6 +49,7 @@ protocol Requestable {
     var url: String { get }
     var httpMethod: String { get }
     var headers: [String: String] { get }
+    var bodyParameter: [String: Any]? { get }
     func decode(from data: Data) throws -> Model
 }
 
@@ -57,6 +58,10 @@ extension Requestable {
         guard let url = URL(string: url) else { return nil }
         var request = URLRequest(url: url)
         request.httpMethod = httpMethod
+        if let bodyParameter = bodyParameter {
+            let data = try! JSONSerialization.data(withJSONObject: bodyParameter, options: [])
+            request.httpBody = data
+        }
         headers.forEach { key, value in
             request.addValue(value, forHTTPHeaderField: key)
         }
@@ -69,6 +74,10 @@ struct GitHubAccountAPIRequest: Requestable {
 
     var url: String {
         return "https://api.github.com/users/NewFieldForMe"
+    }
+
+    var bodyParameter: [String : Any]? {
+        return nil
     }
 
     var httpMethod: String {
@@ -98,6 +107,10 @@ struct GitHubSearchRepositoriesAPIRequest: Requestable {
         return "https://api.github.com/search/repositories?q=swift+api"
     }
 
+    var bodyParameter: [String : Any]? {
+        return nil
+    }
+
     var httpMethod: String {
         return "GET"
     }
@@ -122,4 +135,53 @@ struct GitHubRepositories: Codable {
 struct GitHubRepository: Codable {
     let name: String
     let htmlUrl: String
+}
+
+struct CreateGistAPIRequest: Requestable {
+    typealias Model = Void
+
+    var gist: PostGist?
+
+    var token = "{Your Personal access token}"
+
+    var url: String {
+        return "https://api.github.com/gists"
+    }
+
+    var httpMethod: String {
+        return "POST"
+    }
+
+    var headers: [String: String] {
+        return [
+            "Content-type": "application/json; charset=utf-8",
+            "Authorization": "token \(token)",
+            "Accept": "application/vnd.github.v3+json"
+        ]
+    }
+
+    var bodyParameter: [String : Any]? {
+        guard let gist = gist else {
+            return nil
+        }
+        return
+            [
+                "public": gist.public,
+                "files": [
+                    gist.filename: [
+                        "content": gist.content
+                    ]
+                ]
+            ]
+    }
+
+    func decode(from data: Data) throws -> Void {
+        return
+    }
+}
+
+struct PostGist {
+    let `public`: Bool
+    let filename: String
+    let content: String
 }

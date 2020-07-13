@@ -59,6 +59,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             }
         })
 
+        var request3 = CreateGistAPIRequest()
+        request3.gist = PostGist(public: false, filename: "Post test", content: "Dekitara Yeah!!(´･ω･`)v")
+        APIClient().request(request3, completion: { result in
+            dump(result)
+        })
+
         let contentView = ContentView()
 
         // Use a UIHostingController as window root view controller.
