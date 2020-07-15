@@ -63,6 +63,31 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 //        APIClient().request(request3, completion: { result in
 //            dump(result)
 //        })
+        let gist = PostGist(public: false, fileName: "hogehoge.txt", content: "Toukou!")
+        let data = try! JSONEncoder().encode(gist)
+        print(String(data: data, encoding: String.Encoding.utf8)!)
+
+
+        let json = """
+            {
+                "public": false,
+                "files": {
+                    "gist.txt": {
+                        "content": "Toukou!"
+                    }
+                }
+            }
+"""
+        let decoder = JSONDecoder()
+        if let jsonData = json.data(using: .utf8) {
+          do {
+              let results = try decoder.decode(PostGist.self, from: jsonData)
+              print(results)
+          } catch {
+              print(error)
+          }
+        }
+
 
         let contentView = ContentView()
 

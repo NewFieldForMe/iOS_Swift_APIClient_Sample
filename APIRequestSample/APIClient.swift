@@ -11,7 +11,7 @@ import Foundation
 class APIClient {
     func request<T: Requestable>(_ requestable: T, completion: @escaping(Result<T.Model?, APIError>) -> Void) {
         guard var request = requestable.urlRequest() else { return }
-        let gist = PostGist(public: false, filename: "test", content: "yattane.")
+        let gist = PostGist(public: false, fileName: "test", content: "yattane.")
         request.httpBody = try! JSONEncoder().encode(gist)
         let task = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) in
             if let error = error {
@@ -144,10 +144,12 @@ class CreateGistAPIRequest: Request {
 
 struct PostGist {
     let `public`: Bool
-    let filename: String
+    let fileName: String
     let content: String
+}
 
-    struct CustomCodingKey: CodingKey {
+extension PostGist: Codable {
+    private struct CustomCodingKey: CodingKey {
         var stringValue: String
         init?(stringValue: String) {
             self.stringValue = stringValue
@@ -160,14 +162,21 @@ struct PostGist {
         static let files = CustomCodingKey(stringValue: "files")!
         static let content = CustomCodingKey(stringValue: "content")!
     }
-}
 
-extension PostGist: Encodable {
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CustomCodingKey.self)
+        `public` = try container.decode(Bool.self, forKey: .public)
+        let filesContainer = try container.nestedContainer(keyedBy: CustomCodingKey.self, forKey: .files)
+        fileName = filesContainer.allKeys.first!.stringValue
+        let fileContainer = try filesContainer.nestedContainer(keyedBy: CustomCodingKey.self, forKey: CustomCodingKey(stringValue: fileName)!)
+        content = try fileContainer.decode(String.self, forKey: .content)
+    }
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CustomCodingKey.self)
         try container.encode(`public`, forKey: .public)
         var filesContainer = container.nestedContainer(keyedBy: CustomCodingKey.self, forKey: .files)
-        let fileNameKey = CustomCodingKey(stringValue: filename)!
+        let fileNameKey = CustomCodingKey(stringValue: fileName)!
         var fileContainer = filesContainer.nestedContainer(keyedBy: CustomCodingKey.self, forKey: fileNameKey)
         try fileContainer.encode(content, forKey: .content)
     }
